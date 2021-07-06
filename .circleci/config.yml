@@ -3,6 +3,8 @@ version: 2.1
 x-job-setup: &job-setup
   docker:
     - image: cimg/node:15.1
+  environment:
+    PATH: ${PATH}:${HOME}/.yarn/bin
 
 x-npm-auth: &npm-auth
   run:
