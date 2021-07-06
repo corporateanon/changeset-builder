@@ -6,7 +6,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "@changesets/cli": "^2.16.0",
-    "changeset-releaser": "^0.0.2"
+    "@changesets/cli": "^2.16.0"
   }
 }
