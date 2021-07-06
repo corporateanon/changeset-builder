@@ -3,8 +3,6 @@ version: 2.1
 x-job-setup: &job-setup
   docker:
     - image: cimg/node:15.1
-  environment:
-    PATH: ${PATH}:${HOME}/.yarn/bin
 
 x-npm-auth: &npm-auth
   run:
@@ -73,13 +71,12 @@ jobs:
           command: |
             cd packages/changeset-releaser
             yarn build
-            yarn link
       - run:
           name: Building changed packages and its dependencies
-          command: changeset-releaser build
+          command: npm workspace changeset-releaser run cli build
       - run:
           name: Testing changed packages and its dependents
-          command: changeset-releaser test
+          command: npm workspace changeset-releaser run cli test
 
   release:
     <<: *job-setup
