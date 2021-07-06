@@ -69,14 +69,13 @@ jobs:
       - run:
           name: Build the builder
           command: |
-            cd packages/changeset-releaser
-            yarn build
+            yarn global add changeset-releaser --prefix=${HOME}
       - run:
           name: Building changed packages and its dependencies
-          command: npm workspace changeset-releaser run cli build
+          command: changeset-releaser build
       - run:
           name: Testing changed packages and its dependents
-          command: npm workspace changeset-releaser run cli test
+          command: changeset-releaser test
 
   release:
     <<: *job-setup
