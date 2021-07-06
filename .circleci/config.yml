@@ -68,10 +68,10 @@ jobs:
       - *yarn-workspaces-info
       - run:
           name: Building changed packages and its dependencies
-          command: yarn changeset-builder:build
+          command: yarn changeset-releaser build
       - run:
           name: Testing changed packages and its dependents
-          command: yarn changeset-builder:test
+          command: yarn changeset-releaser test
 
   release:
     <<: *job-setup

@@ -2,14 +2,11 @@
   "name": "monorepo-root",
   "private": true,
   "version": "0.0.1",
-  "scripts": {
-    "changeset-builder:build": "yarn workspace @sweepbright/changeset-builder run changeset-build --directory=../..",
-    "changeset-builder:test": "yarn workspace @sweepbright/changeset-builder run changeset-test --directory=../.."
-  },
   "workspaces": [
     "packages/*"
   ],
   "dependencies": {
-    "@changesets/cli": "^2.16.0"
+    "@changesets/cli": "^2.16.0",
+    "changeset-releaser": "^0.0.2"
   }
 }
