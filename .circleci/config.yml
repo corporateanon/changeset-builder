@@ -67,6 +67,11 @@ jobs:
       - *npm-install
       - *yarn-workspaces-info
       - run:
+          name: Build the builder
+          command: |
+            cd packages/changeset-releaser
+            yarn build
+      - run:
           name: Building changed packages and its dependencies
           command: yarn changeset-releaser build
       - run:
