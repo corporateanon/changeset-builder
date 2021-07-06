@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@types/yargs": "^17.0.1",
+    "chalk": "^4.1.1",
     "dependency-graph": "^0.11.0",
     "execa": "^5.1.1",
     "globby": "^11.0.3",
