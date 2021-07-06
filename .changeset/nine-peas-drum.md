@@ -1,5 +1,0 @@
----
-'changeset-releaser': patch
----
-
-init
