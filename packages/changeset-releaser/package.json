@@ -1,6 +1,6 @@
 {
   "name": "changeset-releaser",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "index.js",
   "bin": {
     "changeset-releaser": "lib/cli.js"
