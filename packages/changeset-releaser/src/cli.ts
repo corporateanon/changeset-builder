@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
-import BuildCommand from './cmd/build';
-import TestCommand from './cmd/test';
+import BuildCommand from './cmd/cBuild';
+import TestCommand from './cmd/cTest';
 
 const main = async () => {
   yargs
