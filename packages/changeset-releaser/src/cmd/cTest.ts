@@ -1,36 +1,22 @@
-import chalk from 'chalk';
-import execa from 'execa';
 import { CommandModule } from 'yargs';
-import { getMonorepoData, printList } from '../core';
+import { getMonorepoData } from '../core';
+import { ExecutionPlanner, TargetGroup } from '../ExecutionPlanner';
+import { PlanExecutor } from '../PlanExecutor';
+import { ScriptRunnerYarn } from '../ScriptRunner';
 
 interface Args {}
-const TestCommand: CommandModule<Args> = {
+
+const TestCommand: CommandModule<{}, Args> = {
   command: 'test',
   builder: {},
-  describe: 'Test changed packages',
+  describe: 'Test changed packages and their dependents',
   async handler() {
-    const {
-      packagesToTest: packagesToBeTested,
-      changedPackages,
-      packageScripts
-    } = await getMonorepoData(process.cwd());
-
-    printList('Changed packages', changedPackages);
-    printList('Packages to be tested', packagesToBeTested);
-
-    for (const pkg of packagesToBeTested) {
-      if (!packageScripts[pkg]?.has('test')) {
-        console.log(
-          chalk`💤  {yellow [TEST][SKIP] Package "${pkg}" does not have "test" script}`
-        );
-        continue;
-      }
-      console.log(chalk`\n⚙️  {bold [TEST] Building package: "${pkg}"}\n`);
-
-      await execa('yarn', ['workspace', pkg, 'run', 'test'], {
-        stdio: 'inherit'
-      });
-    }
+    const monorepo = await getMonorepoData(process.cwd());
+    const executor = new PlanExecutor(
+      new ExecutionPlanner(monorepo),
+      new ScriptRunnerYarn()
+    );
+    await executor.runScript(TargetGroup.Test, 'test');
   }
 };
 export default TestCommand;

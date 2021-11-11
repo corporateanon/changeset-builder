@@ -1,3 +1,4 @@
+import assert from 'assert';
 import chalk from 'chalk';
 import { DepGraph } from 'dependency-graph';
 import execa from 'execa';
@@ -10,7 +11,7 @@ import YAML from 'yaml';
 
 type PackageScripts = Record<string, ReadonlySet<string>>;
 
-interface MonorepoData {
+export interface MonorepoData {
   changedPackages: string[];
   packagesToBuild: string[];
   packagesToTest: string[];
@@ -54,12 +55,10 @@ async function getChangedPackages(): Promise<ReadonlySet<string>> {
 }
 
 async function getWorkspacesInfo(): Promise<WorkspacesInfo> {
-  const { stdout } = await execa('yarn', ['workspaces', 'info']);
-  //TODO: use yarn --json and json-lines
-  const lines = stdout
-    .split('\n')
-    .filter(line => !line.startsWith('yarn') && !line.startsWith('Done'));
-  const data = JSON.parse(lines.join('\n'));
+  const { stdout } = await execa('yarn', ['--json', 'workspaces', 'info']);
+  const { type, data: dataJson } = JSON.parse(stdout);
+  assert.strictEqual(type, 'log');
+  const data = JSON.parse(dataJson);
   return data;
 }
 
