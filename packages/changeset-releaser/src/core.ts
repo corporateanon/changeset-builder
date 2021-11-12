@@ -4,19 +4,17 @@ import execa from 'execa';
 import fs from 'fs';
 import globby from 'globby';
 import { asyncReduce } from 'iter-tools';
+import { IPackageJson } from 'package-json-type';
 import { join } from 'path';
 import YAML from 'yaml';
 
-interface PackagesCapabilities {
-  buildable: ReadonlySet<string>;
-  testable: ReadonlySet<string>;
-}
+type PackageScripts = Record<string, ReadonlySet<string>>;
 
 interface MonorepoData {
-  changedPackages: ReadonlySet<string>;
-  packagesToBeBuilt: string[];
-  packagesToBeTested: ReadonlySet<string>;
-  packageCapabilities: PackagesCapabilities;
+  changedPackages: string[];
+  packagesToBuild: string[];
+  packagesToTest: string[];
+  packageScripts: PackageScripts;
 }
 
 interface WorkspaceInfo {
@@ -78,34 +76,41 @@ function createDependencyGraph(workspaces: WorkspacesInfo): DepGraph<void> {
   return dependencyGraph;
 }
 
-function getPackagesToBeTested(
-  changedPackages: ReadonlySet<string>,
-  dependencyGraph: DepGraph<void>
-): ReadonlySet<string> {
-  const packagesToBeTested = new Set<string>();
-  for (const pkg of changedPackages) {
-    packagesToBeTested.add(pkg);
-    for (const dependentPackage of dependencyGraph.dependentsOf(pkg)) {
-      packagesToBeTested.add(dependentPackage);
-    }
-  }
-  return packagesToBeTested;
-}
-
-function getPackagesToBeBuilt(
-  packagesToBeTested: ReadonlySet<string>,
+/**
+ * Get packages and their recursive dependents
+ */
+function getUpstreamPackages(
+  packages: Iterable<string>,
   dependencyGraph: DepGraph<void>
 ): string[] {
-  const unorderedPackagesToBeBuilt = new Set<string>();
-  for (const pkg of packagesToBeTested) {
-    unorderedPackagesToBeBuilt.add(pkg);
+  const unorderedPackages = new Set<string>();
+  for (const pkg of packages) {
+    unorderedPackages.add(pkg);
+    for (const dependentPackage of dependencyGraph.dependentsOf(pkg)) {
+      unorderedPackages.add(dependentPackage);
+    }
+  }
+  const order = dependencyGraph.overallOrder();
+  return order.filter(pkg => unorderedPackages.has(pkg));
+}
+
+/**
+ * Get packages and their recursive dependencies
+ */
+function getDownstreamPackages(
+  packages: Iterable<string>,
+  dependencyGraph: DepGraph<void>
+): string[] {
+  const unorderedPackages = new Set<string>();
+  for (const pkg of packages) {
+    unorderedPackages.add(pkg);
     for (const dependencyPkg of dependencyGraph.dependenciesOf(pkg)) {
-      unorderedPackagesToBeBuilt.add(dependencyPkg);
+      unorderedPackages.add(dependencyPkg);
     }
   }
 
-  const buildOrder = dependencyGraph.overallOrder();
-  return buildOrder.filter(pkg => unorderedPackagesToBeBuilt.has(pkg));
+  const order = dependencyGraph.overallOrder();
+  return order.filter(pkg => unorderedPackages.has(pkg));
 }
 
 export function printList(title: string, list: Iterable<string>) {
@@ -119,7 +124,7 @@ export function printList(title: string, list: Iterable<string>) {
 async function getPackageJson(
   workspacesInfo: WorkspacesInfo,
   pkg: string
-): Promise<null | { scripts?: { [scriptName: string]: string } }> {
+): Promise<null | IPackageJson> {
   const pkgDir = workspacesInfo[pkg]?.location ?? null;
   if (!pkgDir) {
     return null;
@@ -128,23 +133,16 @@ async function getPackageJson(
   return JSON.parse(await fs.promises.readFile(packageFile, 'utf8'));
 }
 
-async function getPackagesCapabilities(
+async function getPackagesScripts(
   workspacesInfo: WorkspacesInfo
-): Promise<PackagesCapabilities> {
-  const caps = {
-    buildable: new Set<string>(),
-    testable: new Set<string>()
-  };
+): Promise<PackageScripts> {
+  const scripts: PackageScripts = {};
+
   for (const pkg of Object.keys(workspacesInfo)) {
     const packageJSON = await getPackageJson(workspacesInfo, pkg);
-    if (packageJSON?.scripts?.test) {
-      caps.testable.add(pkg);
-    }
-    if (packageJSON?.scripts?.build) {
-      caps.buildable.add(pkg);
-    }
+    scripts[pkg] = new Set(Object.keys(packageJSON?.scripts ?? {}));
   }
-  return caps;
+  return scripts;
 }
 
 export async function getMonorepoData(
@@ -158,22 +156,19 @@ export async function getMonorepoData(
 
   const dependencyGraph = createDependencyGraph(workspacesInfo);
 
-  const packagesToBeTested = getPackagesToBeTested(
-    changedPackages,
+  const packagesToTest = getUpstreamPackages(changedPackages, dependencyGraph);
+
+  const packagesToBuild = getDownstreamPackages(
+    packagesToTest,
     dependencyGraph
   );
 
-  const packagesToBeBuilt = getPackagesToBeBuilt(
-    packagesToBeTested,
-    dependencyGraph
-  );
-
-  const packageCapabilities = await getPackagesCapabilities(workspacesInfo);
+  const packageScripts = await getPackagesScripts(workspacesInfo);
 
   return {
-    changedPackages,
-    packagesToBeBuilt,
-    packagesToBeTested,
-    packageCapabilities
+    changedPackages: Array.from(changedPackages),
+    packagesToBuild,
+    packagesToTest,
+    packageScripts
   };
 }

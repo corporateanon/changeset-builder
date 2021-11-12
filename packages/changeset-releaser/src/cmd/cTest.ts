@@ -10,16 +10,16 @@ const TestCommand: CommandModule<Args> = {
   describe: 'Test changed packages',
   async handler() {
     const {
-      packagesToBeTested,
+      packagesToTest: packagesToBeTested,
       changedPackages,
-      packageCapabilities
+      packageScripts
     } = await getMonorepoData(process.cwd());
 
     printList('Changed packages', changedPackages);
     printList('Packages to be tested', packagesToBeTested);
 
     for (const pkg of packagesToBeTested) {
-      if (!packageCapabilities.testable.has(pkg)) {
+      if (!packageScripts[pkg]?.has('test')) {
         console.log(
           chalk`💤  {yellow [TEST][SKIP] Package "${pkg}" does not have "test" script}`
         );

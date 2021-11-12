@@ -10,16 +10,16 @@ const BuildCommand: CommandModule<Args> = {
   describe: 'Build changed packages',
   async handler() {
     const {
-      packagesToBeBuilt,
+      packagesToBuild: packagesToBeBuilt,
       changedPackages,
-      packageCapabilities
+      packageScripts
     } = await getMonorepoData(process.cwd());
 
     printList('Changed packages', changedPackages);
     printList('Packages to be built', packagesToBeBuilt);
 
     for (const pkg of packagesToBeBuilt) {
-      if (!packageCapabilities.buildable.has(pkg)) {
+      if (!packageScripts[pkg]?.has('build')) {
         console.log(
           chalk`💤  {yellow [BUILD][SKIP] Package "${pkg}" does not have "build" script}`
         );
