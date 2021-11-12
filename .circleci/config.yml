@@ -104,7 +104,7 @@ jobs:
       - *workspace-attach
       - run:
           name: Testing changed packages and its dependents
-          command: yarn test
+          command: changeset-releaser test
 
   release:
     <<: *job-setup
