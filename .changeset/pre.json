@@ -4,5 +4,7 @@
   "initialVersions": {
     "changeset-releaser": "0.0.4"
   },
-  "changesets": []
+  "changesets": [
+    "lovely-frogs-stare"
+  ]
 }
