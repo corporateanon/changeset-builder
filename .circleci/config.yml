@@ -1,65 +1,88 @@
 version: 2.1
 
-x-job-setup: &job-setup
-  docker:
-    - image: cimg/node:15.1
+x-defs:
+  - &job-setup
+    docker:
+      - image: cimg/node:14.18
+    working_directory: ~/workspace/repo
 
-x-npm-auth: &npm-auth
-  run:
-    name: Authenticate with NPM registry
-    command: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ${HOME}/.npmrc
+  - &workspace-persist
+    persist_to_workspace:
+      root: ~/workspace
+      paths:
+        - repo
 
-x-git-user: &git-user
-  run:
-    name: Git user
-    command: |
-      git config user.email "CircleCI"
-      git config user.name "CircleCI"
+  - &workspace-attach
+    attach_workspace:
+      at: ~/workspace
 
-x-npm-install: &npm-install
-  node/install-packages:
-    pkg-manager: yarn
+  - &npm-auth
+    run:
+      name: Authenticate with NPM registry
+      command: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ${HOME}/.npmrc
 
-x-yarn-workspaces-info: &yarn-workspaces-info
-  run:
-    name: Show info about workspaces
-    command: yarn workspaces info
+  - &git-user
+    run:
+      name: Git user
+      command: |
+        git config user.email "CircleCI"
+        git config user.name "CircleCI"
 
-x-git-push: &git-push
-  run:
-    name: Commit and push changes to git repository
-    command: |
-      if [[ -n $(git status --porcelain) ]]; then
-        git add .
-        git commit -m 'chore(changesets): [ci skip] bump packages versions'
-        git push -u origin ${CIRCLE_BRANCH} --follow-tags
-      else
-        echo "No changes in GIT, not pushing"
-      fi
+  - &npm-install
+    node/install-packages:
+      pkg-manager: yarn
 
-x-fail-on-pre: &fail-on-pre
-  run:
-    name: Ensure there is no pre.json
-    command: |
-      if [[ -f ".changeset/pre.json" ]]; then
-        echo "pre.json may only exist in branches starting with pre-release/"
-        exit 1
-      fi
+  - &yarn-workspaces-info
+    run:
+      name: Show info about workspaces
+      command: yarn workspaces info
 
-x-fail-on-missing-pre: &fail-on-missing-pre
-  run:
-    name: Ensure there is pre.json
-    command: |
-      if [[ ! -f ".changeset/pre.json" ]]; then
-        echo "pre.json must exist in branches starting with pre-release/"
-        exit 1
-      fi
+  - &git-push
+    run:
+      name: Commit and push changes to git repository
+      command: |
+        if [[ -n $(git status --porcelain) ]]; then
+          git add .
+          git commit -m 'chore(changesets): [ci skip] bump packages versions'
+          git push -u origin ${CIRCLE_BRANCH} --follow-tags
+        else
+          echo "No changes in GIT, not pushing"
+        fi
+
+  - &fail-on-pre
+    run:
+      name: Ensure there is no pre.json
+      command: |
+        if [[ -f ".changeset/pre.json" ]]; then
+          echo "pre.json may only exist in branches starting with pre-release/"
+          exit 1
+        fi
+
+  - &fail-on-missing-pre
+    run:
+      name: Ensure there is pre.json
+      command: |
+        if [[ ! -f ".changeset/pre.json" ]]; then
+          echo "pre.json must exist in branches starting with pre-release/"
+          exit 1
+        fi
+
+  - &filter-only-master
+    branches:
+      only:
+        - master
+
+  - &filter-only-pre-release
+    branches:
+      only:
+        - /pre-release/.*/
+        - /pre/.*/
 
 orbs:
   node: circleci/node@4.1
 
 jobs:
-  test:
+  build:
     <<: *job-setup
     steps:
       - checkout
@@ -67,24 +90,30 @@ jobs:
       - *npm-install
       - *yarn-workspaces-info
       - run:
-          name: Build the builder
+          name: Installing the stable release of itself
           command: |
             yarn global add changeset-releaser --prefix=${HOME}
       - run:
           name: Building changed packages and its dependencies
           command: changeset-releaser build
+      - *workspace-persist
+
+  test:
+    <<: *job-setup
+    steps:
+      - *workspace-attach
       - run:
           name: Testing changed packages and its dependents
-          command: changeset-releaser test
+          command: yarn test
 
   release:
     <<: *job-setup
     steps:
       - checkout
+      - *workspace-attach
       - *git-user
       - *npm-auth
       - *fail-on-pre
-      - *npm-install
       - *yarn-workspaces-info
       - run:
           name: Check if changesets are present
@@ -101,10 +130,10 @@ jobs:
     <<: *job-setup
     steps:
       - checkout
+      - *workspace-attach
       - *git-user
       - *npm-auth
       - *fail-on-missing-pre
-      - *npm-install
       - *yarn-workspaces-info
       - run:
           name: Check if changesets are present
@@ -120,34 +149,30 @@ jobs:
 workflows:
   build-test-and-deploy:
     jobs:
-      - test
+      # always run
+      - build
+      - test:
+          requires:
+            - build
+
+      # release (from master)
       - approve-release:
           requires:
             - test
           type: approval
-          filters:
-            branches:
-              only:
-                - master
+          filters: *filter-only-master
+      - release:
+          requires:
+            - approve-release
+          filters: *filter-only-master
+
+      # pre-release (from pre/... branch)
       - approve-pre-release:
           requires:
             - test
           type: approval
-          filters:
-            branches:
-              only:
-                - /pre-release/.*/
-      - release:
-          requires:
-            - approve-release
-          filters:
-            branches:
-              only:
-                - master
+          filters: *filter-only-pre-release
       - pre-release:
           requires:
             - approve-pre-release
-          filters:
-            branches:
-              only:
-                - /pre-release/.*/
+          filters: *filter-only-pre-release
