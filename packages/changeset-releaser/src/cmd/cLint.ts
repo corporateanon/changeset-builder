@@ -6,18 +6,17 @@ import { ScriptRunnerYarn } from '../ScriptRunner';
 
 interface Args {}
 
-const BuildCommand: CommandModule<{}, Args> = {
-  command: 'build',
+const LintCommand: CommandModule<{}, Args> = {
+  command: 'lint',
   builder: {},
-  describe:
-    'Build changed packages, packages for test and all their dependencies',
+  describe: 'Lint changed packages',
   async handler() {
     const monorepo = await getMonorepoData(process.cwd());
     const executor = new PlanExecutor(
       new ExecutionPlanner(monorepo),
       new ScriptRunnerYarn()
     );
-    await executor.runScript(TargetGroup.Build, 'build');
+    await executor.runScript(TargetGroup.Changed, 'lint');
   }
 };
-export default BuildCommand;
+export default LintCommand;

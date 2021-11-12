@@ -65,7 +65,7 @@ function createMonorepo() {
   return packages;
 }
 
-describe('INT-0001', () => {
+describe('getMonorepoData', () => {
   it('gets data of initial monorepo', async () => {
     const { root } = await prepareSandbox();
     const packages = createMonorepo();
