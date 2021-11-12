@@ -24,7 +24,7 @@ export class ExecutionPlanner {
       }
     }
   }
-  planScript(group: TargetGroup, script: string) {
+  createPlan(group: TargetGroup, script: string) {
     const pkgs = this.getPackagesByTargetGroup(group);
 
     const usedPackages = pkgs.filter(pkg =>

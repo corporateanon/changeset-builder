@@ -10,7 +10,7 @@ export class PlanExecutor implements IPlanExecutor {
   ) {}
 
   async runScript(group: TargetGroup, script: string): Promise<void> {
-    const plan = this.planner.planScript(group, script);
+    const plan = this.planner.createPlan(group, script);
 
     if (plan.changedPackages.length) {
       console.log(chalk`\nℹ️ The following packages were changed:`);
