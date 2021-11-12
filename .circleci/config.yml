@@ -8,13 +8,15 @@ x-defs:
 
   - &workspace-persist
     persist_to_workspace:
-      root: ~/workspace
+      root: '~'
       paths:
-        - repo
+        - workspace/repo
+        - .config/yarn/global
+        - bin
 
   - &workspace-attach
     attach_workspace:
-      at: ~/workspace
+      at: '~'
 
   - &npm-auth
     run:
