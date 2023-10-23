@@ -1,5 +1,11 @@
 # changeset-releaser
 
+## 0.1.2
+
+### Patch Changes
+
+- ee65ffe: Put the Readme into the correct place
+
 ## 0.1.1
 
 ### Patch Changes
