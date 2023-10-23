@@ -8,7 +8,7 @@ x-defs:
 
   - &workspace-persist
     persist_to_workspace:
-      root: '~'
+      root: "~"
       paths:
         - workspace/repo
         - .config/yarn/global
@@ -16,7 +16,7 @@ x-defs:
 
   - &workspace-attach
     attach_workspace:
-      at: '~'
+      at: "~"
 
   - &npm-auth
     run:
@@ -159,22 +159,20 @@ workflows:
 
       # release (from master)
       - approve-release:
-          requires:
-            - test
           type: approval
           filters: *filter-only-master
       - release:
           requires:
+            - test
             - approve-release
           filters: *filter-only-master
 
       # pre-release (from pre/... branch)
       - approve-pre-release:
-          requires:
-            - test
           type: approval
           filters: *filter-only-pre-release
       - pre-release:
           requires:
+            - test
             - approve-pre-release
           filters: *filter-only-pre-release
