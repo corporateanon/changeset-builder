@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "changeset-releaser": "0.1.0"
+  },
+  "changesets": []
+}
