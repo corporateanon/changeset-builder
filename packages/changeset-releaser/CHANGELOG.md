@@ -1,5 +1,11 @@
 # changeset-releaser
 
+## 0.1.1-next.0
+
+### Patch Changes
+
+- d1c68e1: Add documentation
+
 ## 0.1.0
 
 ### Minor Changes
