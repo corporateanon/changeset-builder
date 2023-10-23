@@ -1,6 +1,24 @@
 {
   "name": "changeset-releaser",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harnyk/changeset-releaser",
+    "directory": "packages/changeset-releaser"
+  },
+  "description": "Incremental builds and tests runner for monorepo projects based on Atlassian Changesets",
+  "keywords": [
+    "monorepo",
+    "changesets",
+    "releaser",
+    "incremental",
+    "build",
+    "test"
+  ],
+  "author": {
+    "name": "Mark Harnyk",
+    "url": "https://github.com/harnyk"
+  },
   "main": "index.js",
   "bin": {
     "changeset-releaser": "lib/cli.js"
@@ -15,11 +33,11 @@
     "build:types": "tsc --emitDeclarationOnly",
     "changeset-build": "babel-node -x '.ts' src/build.ts",
     "changeset-test": "babel-node -x '.ts' src/test.ts",
-    "import:all": "npm run build && ./scripts/yarn-import-all.sh",
-    "type-check": "tsc --noEmit",
-    "type-check:watch": "npm run type-check -- --watch",
     "cli": "./lib/cli.js",
-    "test": "jest"
+    "import:all": "npm run build && ./scripts/yarn-import-all.sh",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch"
   },
   "dependencies": {
     "@types/yargs": "^17.0.1",
